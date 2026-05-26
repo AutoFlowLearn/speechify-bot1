@@ -3,6 +3,11 @@ import base64
 import requests
 import json
 import os
+import sys
+
+# Force unbuffered output
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -10,6 +15,9 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+
+print("📦 Script loaded, starting main...", flush=True)
 
 
 EMAIL = os.getenv("EMAIL")
@@ -24,7 +32,7 @@ CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
 
 
 def start_driver():
-    print("🚀 Driver starting...")
+    print("🚀 Driver starting...", flush=True)
     
     options = webdriver.ChromeOptions()
     options.binary_location = CHROME_BIN
@@ -36,25 +44,30 @@ def start_driver():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-extensions")
     options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--remote-debugging-port=9222")
     
     options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+    
+    print(f"🔧 Chrome binary: {CHROME_BIN}", flush=True)
+    print(f"🔧 Chromedriver: {CHROMEDRIVER_PATH}", flush=True)
     
     service = Service(CHROMEDRIVER_PATH)
     driver = webdriver.Chrome(service=service, options=options)
     driver.execute_cdp_cmd("Network.enable", {})
     
-    print("✅ Driver ready!")
+    print("✅ Driver ready!", flush=True)
     return driver
 
 
 def login(driver):
-    print("🔐 Logging in...")
+    print("🔐 Logging in...", flush=True)
     wait = WebDriverWait(driver, 40)
     
     driver.get(
         "https://studio.speechify.com/sign-in"
         "?returnTo=https%3A%2F%2Fstudio.speechify.com%2F"
     )
+    print("📄 Page loaded", flush=True)
     
     email_input = wait.until(
         EC.presence_of_element_located(
@@ -63,6 +76,7 @@ def login(driver):
     )
     email_input.clear()
     email_input.send_keys(EMAIL)
+    print("📧 Email entered", flush=True)
     time.sleep(1)
     
     pass_input = wait.until(
@@ -73,11 +87,12 @@ def login(driver):
     pass_input.clear()
     pass_input.send_keys(PASSWORD)
     pass_input.send_keys(Keys.ENTER)
+    print("🔑 Password entered, waiting...", flush=True)
     
     time.sleep(15)
     driver.get("https://studio.speechify.com/")
     time.sleep(10)
-    print("✅ Login complete!")
+    print("✅ Login complete!", flush=True)
 
 
 def get_token(driver):
@@ -104,7 +119,7 @@ def get_token(driver):
 
 
 def update_github(token):
-    print("📤 Updating GitHub...")
+    print("📤 Updating GitHub...", flush=True)
     
     url = f"https://api.github.com/repos/{GH_REPO}/contents/{GH_FILE_PATH}"
     
@@ -129,51 +144,55 @@ def update_github(token):
     r = requests.put(url, headers=headers, json=data)
     
     if r.status_code in [200, 201]:
-        print("✅ Token saved on GitHub!")
+        print("✅ Token saved on GitHub!", flush=True)
     else:
-        print(f"❌ Failed: {r.status_code} - {r.text}")
+        print(f"❌ Failed: {r.status_code} - {r.text}", flush=True)
 
 
 def main():
     driver = None
     
     try:
-        print("=" * 50)
-        print("🤖 BOT STARTING...")
-        print("=" * 50)
+        print("=" * 50, flush=True)
+        print("🤖 BOT STARTING...", flush=True)
+        print("=" * 50, flush=True)
         
         if not EMAIL or not PASSWORD:
-            print("❌ EMAIL/PASSWORD missing")
+            print("❌ EMAIL/PASSWORD missing", flush=True)
             return
         
         if not GH_TOKEN or not GH_REPO:
-            print("❌ GH_TOKEN/GH_REPO missing")
+            print("❌ GH_TOKEN/GH_REPO missing", flush=True)
             return
+        
+        print(f"📧 Email: {EMAIL[:5]}***", flush=True)
+        print(f"📦 Repo: {GH_REPO}", flush=True)
         
         driver = start_driver()
         login(driver)
         
-        print("🔍 Searching for token...")
+        print("🔍 Searching for token...", flush=True)
         token = None
         
         for i in range(30):
             token = get_token(driver)
             if token:
-                print(f"✅ Token found ({i+1} tries)")
+                print(f"✅ Token found ({i+1} tries)", flush=True)
                 break
+            print(f"⏳ Try {i+1}/30...", flush=True)
             time.sleep(3)
         
         driver.quit()
         driver = None
         
         if not token:
-            print("❌ Token not found")
+            print("❌ Token not found", flush=True)
         else:
-            print(f"🎯 TOKEN: {token[:30]}...")
+            print(f"🎯 TOKEN: {token[:30]}...", flush=True)
             update_github(token)
             
     except Exception as e:
-        print(f"💥 ERROR: {e}")
+        print(f"💥 ERROR: {e}", flush=True)
         import traceback
         traceback.print_exc()
         

@@ -28,5 +28,8 @@ COPY main_loop.py .
 # Environment variables
 ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-CMD ["python", "main_loop.py"]
+# Run with unbuffered output
+CMD ["python", "-u", "main_loop.py"]

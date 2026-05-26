@@ -7,6 +7,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -18,20 +19,28 @@ GH_REPO = os.getenv("GH_REPO")
 GH_FILE_PATH = os.getenv("GH_FILE_PATH", "tk.txt")
 GH_BRANCH = os.getenv("GH_BRANCH", "main")
 
+CHROME_BIN = os.getenv("CHROME_BIN", "/usr/bin/chromium")
+CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
+
 
 def start_driver():
     print("🚀 Driver starting...")
     
     options = webdriver.ChromeOptions()
+    options.binary_location = CHROME_BIN
+    
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--ignore-certificate-errors")
     
     options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
     
-    driver = webdriver.Chrome(options=options)
+    service = Service(CHROMEDRIVER_PATH)
+    driver = webdriver.Chrome(service=service, options=options)
     driver.execute_cdp_cmd("Network.enable", {})
     
     print("✅ Driver ready!")
